@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+pipeline.log
+data/processed/
+.ipynb_checkpoints/
