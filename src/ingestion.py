@@ -99,9 +99,6 @@ def ingest_acquiredco_api(
     filepath: Path,
     page_size: int = 500
 ) -> pd.DataFrame:
-    """
-    Simulated paginated ingestion for AcquiredCo API export.
-    """
 
     logger.info(f"Ingesting AcquiredCo API JSON: {filepath}")
 
@@ -117,10 +114,6 @@ def ingest_acquiredco_api(
         employees = raw.get("employees", [])
 
         pages = []
-
-        # -------------------------------------------------
-        # Simulated Pagination
-        # -------------------------------------------------
 
         for start_idx in range(0, len(employees), page_size):
 
@@ -139,33 +132,10 @@ def ingest_acquiredco_api(
                     columns=ACQUIREDCO_SCHEMA_MAP
                 )
 
-                # -----------------------------
-                # Date Standardization
-                # -----------------------------
-
-                if "hire_date" in page_df.columns:
-                    page_df["hire_date"] = pd.to_datetime(
-                        page_df["hire_date"],
-                        errors="coerce"
-                    )
-
-                # -----------------------------
-                # Optional Name Repair
-                # -----------------------------
-
-                if "name_full" in page_df.columns:
-
-                    mask = (
-                        page_df["first_name"].isna()
-                        &
-                        page_df["name_full"].notna()
-                    )
-
-                    page_df.loc[mask, "first_name"] = (
-                        page_df.loc[mask, "name_full"]
-                        .str.split()
-                        .str[0]
-                    )
+                page_df["hire_date"] = pd.to_datetime(
+                    page_df["hire_date"],
+                    errors="coerce"
+                )
 
                 page_df["source"] = "acquiredco"
 

@@ -116,7 +116,7 @@ def normalize_currency_and_salary(df):
     df["base_salary"] = (
         df["base_salary"]
         .astype(str)
-        .str.replace(",", "", regex=False)
+        .str.replace(r"[^\d.]", "", regex=True)
     )
 
     df["base_salary"] = pd.to_numeric(
