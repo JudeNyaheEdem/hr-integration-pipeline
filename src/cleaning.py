@@ -1,7 +1,5 @@
 import unicodedata
-
 import pandas as pd
-
 from src.config import CONFIG
 
 
