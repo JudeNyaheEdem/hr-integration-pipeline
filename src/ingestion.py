@@ -35,6 +35,7 @@ def write_dead_letter(dead_records: list, output_name: str) -> None:
 
     filepath = output_path / f"{output_name}.csv"
 
+    dead_df.to_csv(filepath, index=False)
     logger.warning(
         f"Saved {len(dead_df)} dead-letter records to {filepath}"
     )
@@ -43,6 +44,8 @@ def write_dead_letter(dead_records: list, output_name: str) -> None:
 def file_exists(filepath: Path) -> bool:
     if not filepath.exists():
         logger.error(f"Missing source file: {filepath}")
+        return False
+
     return True
 
 

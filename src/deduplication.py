@@ -33,41 +33,39 @@ def fuzzy_match_candidates(df: pd.DataFrame, threshold=88):
 
     df = df.copy()
 
-    df["full_name"] = (
-        df["first_name"].astype(str) + " " + df["last_name"].astype(str)
-    )
-
+    df["full_name"] = df["first_name"].astype(
+        str) + " " + df["last_name"].astype(str)
     df["hire_date"] = pd.to_datetime(df["hire_date"], errors="coerce")
+
+    df["hire_bucket"] = df["hire_date"].dt.to_period("M")
 
     candidates = []
 
-    for i, row_i in df.iterrows():
-        for j, row_j in df.iterrows():
+    for _, group in df.groupby("hire_bucket"):
 
-            if i >= j:
-                continue
+        group = group.reset_index()
 
-            name_score = fuzz.ratio(
-                row_i["full_name"],
-                row_j["full_name"]
-            )
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
 
-            if pd.notna(row_i["hire_date"]) and pd.notna(row_j["hire_date"]):
-                date_diff = abs(
-                    (row_i["hire_date"] - row_j["hire_date"]).days
+                name_score = fuzz.ratio(
+                    group.loc[i, "full_name"],
+                    group.loc[j, "full_name"]
                 )
-            else:
-                date_diff = 999
 
-            if name_score >= threshold and date_diff <= 30:
+                date_diff = abs(
+                    (group.loc[i, "hire_date"] -
+                     group.loc[j, "hire_date"]).days
+                ) if pd.notna(group.loc[i, "hire_date"]) and pd.notna(group.loc[j, "hire_date"]) else 999
 
-                candidates.append({
-                    "record_1_id": row_i["employee_id"],
-                    "record_2_id": row_j["employee_id"],
-                    "similarity_score": name_score,
-                    "hire_date_diff_days": date_diff,
-                    "recommended_action": "manual_review"
-                })
+                if name_score >= threshold and date_diff <= 30:
+                    candidates.append({
+                        "record_1_id": group.loc[i, "employee_id"],
+                        "record_2_id": group.loc[j, "employee_id"],
+                        "similarity_score": name_score,
+                        "hire_date_diff_days": date_diff,
+                        "recommended_action": "manual_review"
+                    })
 
     return pd.DataFrame(candidates)
 
@@ -81,14 +79,16 @@ def dedup_email(df: pd.DataFrame) -> pd.DataFrame:
         by=["email", "source_priority"]
     )
 
-    df["dedup_method"] = df["dedup_method"].fillna("single_source")
+    email_duplicates = df["email"].duplicated(keep=False)
+
+    df.loc[email_duplicates, "dedup_method"] = (
+        df.loc[email_duplicates, "dedup_method"] + "_email_match"
+    )
 
     df = df.drop_duplicates(
         subset=["email"],
         keep="first"
     )
-
-    df["dedup_method"] = df["dedup_method"]+"_email_match"
 
     return df
 
@@ -109,3 +109,20 @@ def add_provenance(df: pd.DataFrame) -> pd.DataFrame:
     df["source_systems"] = df["source"]
 
     return df
+
+
+# Pipeline helper
+
+def deduplicate(df):
+
+    df = add_source_priority(df)
+
+    df = dedup_exact_id(df)
+
+    df = dedup_email(df)
+
+    probable_matches = fuzzy_match_candidates(df)
+
+    df = add_provenance(df)
+
+    return df, probable_matches

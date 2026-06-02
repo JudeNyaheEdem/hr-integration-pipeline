@@ -5,6 +5,7 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG = {
     "input_dir": _PROJECT_ROOT / "data/raw",
     "output_dir": _PROJECT_ROOT / "data/processed",
+    "log_dir": _PROJECT_ROOT / "logs",
     "exchange_rates": {
         "USD": 1.0,
         "EUR": 1.10,
