@@ -3,7 +3,10 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from src.config import CONFIG
 from src.utils import logger
+
+COLORBLIND_PALETTE = CONFIG["colorblind_palette"]
 
 
 def generate_eda_report(
@@ -37,7 +40,8 @@ def generate_eda_report(
     )
 
     dept_counts.plot.barh(
-        ax=axes[0, 0]
+        ax=axes[0, 0],
+        color=COLORBLIND_PALETTE[0]
     )
 
     axes[0, 0].set_title(
@@ -66,7 +70,8 @@ def generate_eda_report(
     )
 
     country_counts.plot.bar(
-        ax=axes[0, 1]
+        ax=axes[0, 1],
+        color=COLORBLIND_PALETTE[1]
     )
 
     axes[0, 1].set_title(
@@ -141,7 +146,8 @@ def generate_eda_report(
 
     tenure_years.dropna().plot.hist(
         bins=20,
-        ax=axes[1, 1]
+        ax=axes[1, 1],
+        color=COLORBLIND_PALETTE[2]
     )
 
     axes[1, 1].set_title(
@@ -184,6 +190,7 @@ def generate_eda_report(
 
     enrollment_rate.plot.bar(
         ax=axes[2, 0]
+        color=COLORBLIND_PALETTE[3]
     )
 
     axes[2, 0].set_title(
@@ -209,7 +216,11 @@ def generate_eda_report(
         x="check",
         y=["passed", "failed"],
         kind="bar",
-        ax=axes[2, 1]
+        ax=axes[2, 1],
+        color=[
+            COLORBLIND_PALETTE[4],
+            COLORBLIND_PALETTE[5]
+        ]
     )
 
     axes[2, 1].set_title(

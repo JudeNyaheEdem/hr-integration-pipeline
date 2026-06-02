@@ -22,7 +22,15 @@ CONFIG = {
         "acquiredco": 2,
         "payroll": 3,
         "benefits": 4
-    }
+    },
+    "colorblind_palette": [
+        "#0072B2",
+        "#E69F00",
+        "#009E73",
+        "#CC79A7",
+        "#56B4E9",
+        "#D55E00"
+    ]
 }
 
 VALIDATION_RULES = {
