@@ -46,16 +46,17 @@ def namespace_employee_ids(df, company_code):
             return identifier
 
         identifier = str(identifier).replace(",", "").strip()
-
         return f"{company_code}-{identifier}"
 
     df["employee_id"] = df["employee_id"].apply(format_id)
-    df["manager_id"] = df["manager_id"].apply(format_id)
+
+    if "manager_id" in df.columns:
+        df["manager_id"] = df["manager_id"].apply(format_id)
 
     return df
 
-
 # Department Standardization
+
 
 def standardize_departments(df):
 
@@ -147,16 +148,41 @@ def normalize_currency_and_salary(df):
         .map(CONFIG["exchange_rates"])
         .fillna(1)
     )
-
+    df["salary_usd_annual"] = pd.to_numeric(
+        df["salary_usd_annual"],
+        errors="coerce"
+    )
     return df
 
 
+def standardize_employment_type(df):
+
+    mapping = {
+        "FT": "Full-Time",
+        "PT": "Part-Time",
+        "FULL-TIME": "Full-Time",
+        "PART-TIME": "Part-Time",
+        "CONTRACTOR": "Contractor"
+    }
+
+    df["employment_type"] = (
+        df["employment_type"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .map(mapping)
+    )
+
+    return df
+
 # Pipeline Helpers
+
 
 def clean_employee_data(df):
 
     df = clean_employee_names(df)
     df = standardize_departments(df)
+    df = standardize_employment_type(df)
     df = standardize_dates(df)
 
     return df

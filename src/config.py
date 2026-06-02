@@ -6,6 +6,7 @@ CONFIG = {
     "input_dir": _PROJECT_ROOT / "data/raw",
     "output_dir": _PROJECT_ROOT / "data/processed",
     "log_dir": _PROJECT_ROOT / "logs",
+    "email_regex": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
     "exchange_rates": {
         "USD": 1.0,
         "EUR": 1.10,

@@ -1,5 +1,5 @@
 import pandas as pd
-from config import VALIDATION_RULES
+from src.config import VALIDATION_RULES
 from src.utils import logger
 from datetime import datetime
 
@@ -20,6 +20,7 @@ class DataQualityValidator:
             "description": description,
             "total": total,
             "passed": total - failed,
+            "failed": failed,
             "pass_rate": round(pass_rate, 4),
             "status": "PASS" if pass_rate >= self.threshold else "FAIL"
         }
@@ -73,13 +74,16 @@ class DataQualityValidator:
         )
 
     def check_referential_integrity(self, child_col, parent_col, description):
+
         child = self.df[child_col].dropna()
-        valid_ids = set(self.df[parent_col].dropna())
+        parent = self.df[parent_col].dropna()
+
+        valid_ids = set(parent)
 
         failed = int((~child.isin(valid_ids)).sum())
 
         return self._record(
-            f"REFERENTIAL: {child_col}",
+            f"REFERENTIAL: {child_col}->{parent_col}",
             description,
             failed,
             len(child)
@@ -138,6 +142,8 @@ def run_quality_checks(df: pd.DataFrame, rules=VALIDATION_RULES):
 
     # NUMERIC RANGE
     for col, (min_v, max_v) in rules.get("numeric_range", {}).items():
+        print("<<<<<<<<<<", col, max_v, min_v)
+        print(df.columns)
         if col in df.columns:
             v.check_numeric_range(col, min_v, max_v, f"{col} range check")
 

@@ -189,7 +189,7 @@ def generate_eda_report(
     )
 
     enrollment_rate.plot.bar(
-        ax=axes[2, 0]
+        ax=axes[2, 0],
         color=COLORBLIND_PALETTE[3]
     )
 

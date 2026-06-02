@@ -96,7 +96,7 @@ def dedup_email(df: pd.DataFrame) -> pd.DataFrame:
 def detect_ghost_employees(payroll_df, hris_df):
 
     ghost = payroll_df[
-        ~payroll_df["employee_id"].isin(hris_df("employee_id"))
+        ~payroll_df["employee_id"].isin(hris_df["employee_id"])
     ].copy()
 
     ghost["ghost_flag_reason"] = "No HRIS match"

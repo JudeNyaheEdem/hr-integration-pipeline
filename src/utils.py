@@ -1,10 +1,10 @@
 import logging
-from config import CONFIG
+from src.config import CONFIG
 
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(messages)s",
+    format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler(CONFIG["log_dir"] /
                             "pipeline.log", encoding="utf-8"),
