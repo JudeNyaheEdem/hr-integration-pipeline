@@ -49,7 +49,7 @@ VALIDATION_RULES = {
     ],
     "regex": {
         "email": CONFIG["email_regex"],
-        "employee_id": r"^(GT|AC)-.*$"
+        "employee_id": r"^(GT|AC)-\d{6}$"
     },
     "values_in_set": {
         "employment_type": ["Full-Time", "Part-Time", "Contractor"],

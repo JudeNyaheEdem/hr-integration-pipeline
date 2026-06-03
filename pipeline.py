@@ -108,7 +108,6 @@ def run_pipeline():
         .fillna(False)
     )
 
-    print("<<<<<<<<<<<<", golden_df.columns)
     logger.info("Running data quality checks")
 
     quality_report = run_quality_checks(golden_df)
