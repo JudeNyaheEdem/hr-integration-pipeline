@@ -17,15 +17,24 @@ def generate_eda_report(
 ):
     logger.info("Generating EDA report")
 
+    plt.rcParams.update({
+        "font.size": 12,
+        "axes.titlesize": 14,
+        "axes.labelsize": 12,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 10
+    })
+
     fig, axes = plt.subplots(
         3,
         2,
-        figsize=(18, 14)
+        figsize=(24, 18)
     )
 
     fig.suptitle(
         "GlobalTech HR Integration Report",
-        fontsize=18,
+        fontsize=24,
         fontweight="bold"
     )
 
@@ -54,7 +63,7 @@ def generate_eda_report(
     )
     axes[0, 0].text(
         0.01,
-        -0.20,
+        -0.28,
         "Source: Unified Employee Dataset",
         transform=axes[0, 0].transAxes
     )
@@ -82,9 +91,13 @@ def generate_eda_report(
     axes[0, 1].set_ylabel(
         "Employees"
     )
+    axes[0, 1].tick_params(
+        axis="x",
+        rotation=90
+    )
     axes[0, 1].text(
         0.01,
-        -0.20,
+        -0.28,
         "Source: Unified Employee Dataset",
         transform=axes[0, 1].transAxes
     )
@@ -113,15 +126,14 @@ def generate_eda_report(
 
     axes[1, 0].text(
         0.01,
-        -0.20,
+        -0.28,
         "Source: Payroll Dataset",
         transform=axes[1, 0].transAxes
     )
 
-    # Remove automatic boxplot title
     fig.suptitle(
         "GlobalTech HR Integration Report",
-        fontsize=18,
+        fontsize=24,
         fontweight="bold"
     )
 
@@ -154,7 +166,7 @@ def generate_eda_report(
 
     axes[1, 1].text(
         0.01,
-        -0.20,
+        -0.28,
         "Source: Unified Employee Dataset",
         transform=axes[1, 1].transAxes
     )
@@ -180,7 +192,7 @@ def generate_eda_report(
         * 100
     )
 
-    enrollment_rate.plot.bar(
+    enrollment_rate.plot.barh(
         ax=axes[2, 0],
         color=COLORBLIND_PALETTE[3]
     )
@@ -189,15 +201,15 @@ def generate_eda_report(
         "Benefits Enrollment Rate by Department"
     )
     axes[2, 0].set_xlabel(
-        "Department"
+        "Enrollment Rate (%)"
     )
     axes[2, 0].set_ylabel(
-        "Enrollment Rate (%)"
+        "Department"
     )
 
     axes[2, 0].text(
         0.01,
-        -0.20,
+        -0.28,
         "Source: Benefits Enrollment Dataset",
         transform=axes[2, 0].transAxes
     )
@@ -207,7 +219,7 @@ def generate_eda_report(
     quality_report_df.plot(
         x="check",
         y=["passed", "failed"],
-        kind="bar",
+        kind="barh",
         ax=axes[2, 1],
         color=[
             COLORBLIND_PALETTE[4],
@@ -219,15 +231,15 @@ def generate_eda_report(
         "Data Quality Summary"
     )
     axes[2, 1].set_xlabel(
-        "Validation Check"
+        "Record Count"
     )
     axes[2, 1].set_ylabel(
-        "Record Count"
+        "Validation Check"
     )
 
     axes[2, 1].text(
         0.01,
-        -0.20,
+        -0.28,
         "Source: Validation Report",
         transform=axes[2, 1].transAxes
     )
@@ -244,7 +256,9 @@ def generate_eda_report(
         ha="right"
     )
 
-    plt.tight_layout()
+    plt.tight_layout(
+        rect=[0, 0.03, 1, 0.96]
+    )
 
     output_file = output_path / "eda_report.png"
 
