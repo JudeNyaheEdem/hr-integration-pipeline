@@ -11,7 +11,6 @@ COLORBLIND_PALETTE = CONFIG["colorblind_palette"]
 
 def generate_eda_report(
     employee_df: pd.DataFrame,
-    payroll_df: pd.DataFrame,
     benefits_df: pd.DataFrame,
     quality_report_df: pd.DataFrame,
     output_path
@@ -90,17 +89,10 @@ def generate_eda_report(
         transform=axes[0, 1].transAxes
     )
 
-    # 3. Salary Distribution by Employment Type
+    # Salary Distribution by Employment Type
 
-    salary_df = employee_df.merge(
-        payroll_df[
-            [
-                "employee_id",
-                "salary_usd_annual"
-            ]
-        ],
-        on="employee_id",
-        how="left"
+    salary_df = employee_df.dropna(
+        subset=["salary_usd_annual"]
     )
 
     salary_df.boxplot(

@@ -34,13 +34,15 @@ def run_pipeline():
 
     payroll_df = clean_payroll_data(payroll_df)
 
-    # Namespace IDs AFTER cleaning
     globaltech_df = namespace_employee_ids(globaltech_df, "GT")
     acquiredco_df = namespace_employee_ids(acquiredco_df, "AC")
     payroll_df = namespace_employee_ids(payroll_df, "GT")
     benefits_df = namespace_employee_ids(benefits_df, "GT")
 
     logger.info("Merging HR datasets")
+
+    globaltech_df["company_origin"] = "GlobalTech"
+    acquiredco_df["company_origin"] = "AcquiredCo"
 
     employee_df = pd.concat(
         [globaltech_df, acquiredco_df],
@@ -58,23 +60,75 @@ def run_pipeline():
         deduped_df
     )
 
+    logger.info("Building golden employee dataset")
+
+    payroll_enrichment = (
+        payroll_df
+        .sort_values("effective_date")
+        .drop_duplicates(
+            subset=["employee_id"],
+            keep="last"
+        )
+        [
+            [
+                "employee_id",
+                "salary_usd_annual"
+            ]
+        ]
+    )
+
+    benefits_enrichment = (
+        benefits_df
+        .groupby("employee_id")
+        .size()
+        .reset_index(name="benefit_count")
+    )
+
+    benefits_enrichment["benefits_enrolled"] = True
+
+    golden_df = deduped_df.merge(
+        payroll_enrichment,
+        on="employee_id",
+        how="left"
+    )
+
+    golden_df = golden_df.merge(
+        benefits_enrichment[
+            [
+                "employee_id",
+                "benefits_enrolled"
+            ]
+        ],
+        on="employee_id",
+        how="left"
+    )
+
+    golden_df["benefits_enrolled"] = (
+        golden_df["benefits_enrolled"]
+        .fillna(False)
+    )
+
+    print("<<<<<<<<<<<<", golden_df.columns)
     logger.info("Running data quality checks")
 
-    quality_report = run_quality_checks(deduped_df)
+    quality_report = run_quality_checks(golden_df)
 
-    failed_checks = (quality_report["status"] == "FAIL").sum()
+    failed_checks = (
+        quality_report["status"] == "FAIL"
+    ).sum()
 
     if failed_checks > 2:
         logger.error(
             "Pipeline halted: too many validation failures"
         )
-        raise ValueError("Data quality threshold breached")
+        raise ValueError(
+            "Data quality threshold breached"
+        )
 
     logger.info("Generating EDA report")
 
     generate_eda_report(
-        employee_df=deduped_df,
-        payroll_df=payroll_df,
+        employee_df=golden_df,
         benefits_df=benefits_df,
         quality_report_df=quality_report,
         output_path=CONFIG["output_dir"]
@@ -83,10 +137,14 @@ def run_pipeline():
     logger.info("Saving outputs")
 
     output_dir = CONFIG["output_dir"]
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
-    deduped_df.to_parquet(
+    golden_df.to_parquet(
         output_dir / "golden_employee_dataset.parquet",
+
         index=False
     )
 
@@ -105,10 +163,17 @@ def run_pipeline():
         index=False
     )
 
-    logger.info("===== PIPELINE COMPLETED SUCCESSFULLY =====")
+    quality_report.to_html(
+        output_dir / "validation_report.html",
+        index=False
+    )
+
+    logger.info(
+        "===== PIPELINE COMPLETED SUCCESSFULLY ====="
+    )
 
     return {
-        "employees": deduped_df,
+        "employees": golden_df,
         "ghost_employees": ghost_df,
         "probable_matches": probable_matches,
         "quality_report": quality_report

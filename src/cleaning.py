@@ -37,16 +37,23 @@ def clean_employee_names(df):
     return df
 
 
-# Employee ID Standardization
-
 def namespace_employee_ids(df, company_code):
 
     def format_id(identifier):
         if pd.isna(identifier):
             return identifier
 
-        identifier = str(identifier).replace(",", "").strip()
-        return f"{company_code}-{identifier}"
+        identifier = str(identifier).strip()
+
+        digits = "".join(
+            ch for ch in identifier
+            if ch.isdigit()
+        )
+
+        if not digits:
+            return pd.NA
+
+        return f"{company_code}-{digits.zfill(6)}"
 
     df["employee_id"] = df["employee_id"].apply(format_id)
 
@@ -55,7 +62,13 @@ def namespace_employee_ids(df, company_code):
 
     return df
 
-# Department Standardization
+
+def clean_acquiredco_noise(df):
+
+    if "employee_id" in df.columns:
+        df = df[~df["employee_id"].astype(str).str.contains("DUP", na=False)]
+
+    return df
 
 
 def standardize_departments(df):
@@ -72,8 +85,6 @@ def standardize_departments(df):
     return df
 
 
-# Date Standardization
-
 def standardize_dates(df):
 
     date_columns = [
@@ -89,10 +100,7 @@ def standardize_dates(df):
         if col not in df.columns:
             continue
 
-        df[col] = pd.to_datetime(
-            df[col],
-            errors="coerce"
-        )
+        df[col] = pd.to_datetime(df[col], errors="coerce")
 
         df[f"{col}_is_invalid"] = (
             (df[col] < "1970-01-01") |
@@ -102,19 +110,17 @@ def standardize_dates(df):
     return df
 
 
-# Payroll Standardization
-
 def normalize_currency_and_salary(df):
 
     df["employee_id"] = (
         df["employee_id"]
-        .astype(str)
+        .astype("string")
         .str.replace(",", "", regex=False)
     )
 
     df["base_salary"] = (
         df["base_salary"]
-        .astype(str)
+        .astype("string")
         .str.replace(r"[^\d.]", "", regex=True)
     )
 
@@ -125,14 +131,23 @@ def normalize_currency_and_salary(df):
 
     df["currency"] = (
         df["currency"]
+        .astype("string")
         .str.upper()
         .str.strip()
     )
 
     df["pay_frequency"] = (
         df["pay_frequency"]
+        .astype(str)
         .str.lower()
         .str.strip()
+        .replace({
+            "monthly": "monthly",
+            "bi weekly": "bi-weekly",
+            "biweekly": "bi-weekly",
+            "bi-weekly": "bi-weekly",
+            "annual": "annual"
+        })
     )
 
     df["salary_annual_local"] = (
@@ -148,10 +163,12 @@ def normalize_currency_and_salary(df):
         .map(CONFIG["exchange_rates"])
         .fillna(1)
     )
+
     df["salary_usd_annual"] = pd.to_numeric(
         df["salary_usd_annual"],
         errors="coerce"
     )
+
     return df
 
 
@@ -162,25 +179,25 @@ def standardize_employment_type(df):
         "PT": "Part-Time",
         "FULL-TIME": "Full-Time",
         "PART-TIME": "Part-Time",
-        "CONTRACTOR": "Contractor"
+        "CONTRACTOR": "Contractor",
+        "CONTRACT": "Contractor"
     }
 
     df["employment_type"] = (
         df["employment_type"]
-        .astype(str)
+        .astype("string")
         .str.strip()
         .str.upper()
-        .map(mapping)
+        .replace(mapping)
     )
 
     return df
-
-# Pipeline Helpers
 
 
 def clean_employee_data(df):
 
     df = clean_employee_names(df)
+    df = clean_acquiredco_noise(df)
     df = standardize_departments(df)
     df = standardize_employment_type(df)
     df = standardize_dates(df)
