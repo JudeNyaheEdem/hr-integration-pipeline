@@ -142,9 +142,9 @@ def run_pipeline():
     )
 
     golden_df.to_parquet(
-        output_dir / "golden_employee_dataset.parquet",
-
-        index=False
+        output_dir / "golden_employee_dataset",
+        partition_cols=["company_origin"],
+        index=False,
     )
 
     ghost_df.to_csv(

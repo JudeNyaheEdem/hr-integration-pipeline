@@ -75,8 +75,10 @@ def dedup_email(df: pd.DataFrame) -> pd.DataFrame:
     if "email" not in df.columns:
         return df
 
+    df["hire_date"] = pd.to_datetime(df["hire_date"], errors="coerce")
+
     df = df.sort_values(
-        by=["email", "source_priority"]
+        by=["email", "source_priority", "hire_date"]
     )
 
     email_duplicates = df["email"].duplicated(keep=False)
@@ -100,6 +102,16 @@ def detect_ghost_employees(payroll_df, hris_df):
     ].copy()
 
     ghost["ghost_flag_reason"] = "No HRIS match"
+
+    ghost = ghost.sort_values(
+        by="effective_date",
+        ascending=False
+    )
+
+    ghost = ghost.drop_duplicates(
+        subset=["employee_id"],
+        keep="first"
+    )
 
     return ghost
 

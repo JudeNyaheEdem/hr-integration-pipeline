@@ -142,8 +142,6 @@ def run_quality_checks(df: pd.DataFrame, rules=VALIDATION_RULES):
 
     # NUMERIC RANGE
     for col, (min_v, max_v) in rules.get("numeric_range", {}).items():
-        print("<<<<<<<<<<", col, max_v, min_v)
-        print(df.columns)
         if col in df.columns:
             v.check_numeric_range(col, min_v, max_v, f"{col} range check")
 
