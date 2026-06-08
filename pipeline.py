@@ -10,7 +10,7 @@ from src.cleaning import (
     clean_payroll_data,
     namespace_employee_ids
 )
-from src.deduplication import deduplicate, detect_ghost_employees
+from src.deduplication import deduplicate, detect_ghost_employees, update_source_systems
 from src.validation import run_quality_checks
 from src.visualization import generate_eda_report
 
