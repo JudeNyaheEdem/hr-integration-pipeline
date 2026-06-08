@@ -123,7 +123,46 @@ def add_provenance(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def update_source_systems(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+
+    df = df.copy()
+
+    has_payroll = df["salary_usd_annual"].notna()
+
+    df.loc[
+        has_payroll,
+        "source_systems"
+    ] = (
+        df.loc[has_payroll, "source_systems"]
+        + ",payroll"
+    )
+
+    has_benefits = df["benefits_enrolled"]
+
+    df.loc[
+        has_benefits,
+        "source_systems"
+    ] = (
+        df.loc[has_benefits, "source_systems"]
+        + ",benefits"
+    )
+
+    df["source_systems"] = (
+        df["source_systems"]
+        .str.split(",")
+        .apply(
+            lambda values: ",".join(
+                sorted(set(filter(None, values)))
+            )
+        )
+    )
+
+    return df
+
 # Pipeline helper
+
 
 def deduplicate(df):
 

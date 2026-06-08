@@ -1,5 +1,6 @@
 import unicodedata
 import pandas as pd
+import numpy as np
 from src.config import CONFIG
 
 
@@ -45,6 +46,9 @@ def namespace_employee_ids(df, company_code):
 
         identifier = str(identifier).strip()
 
+        if identifier.upper().startswith("GHOST"):
+            return identifier
+
         digits = "".join(
             ch for ch in identifier
             if ch.isdigit()
@@ -67,6 +71,23 @@ def clean_acquiredco_noise(df):
 
     if "employee_id" in df.columns:
         df = df[~df["employee_id"].astype(str).str.contains("DUP", na=False)]
+
+    return df
+
+
+def standardize_emails(df):
+    df["email"] = (
+        df["email"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .str.replace(r"\s+", "", regex=True)
+        .replace({
+            "nan": np.nan,
+            "none": np.nan,
+            "": np.nan
+        })
+    )
 
     return df
 
@@ -121,7 +142,7 @@ def normalize_currency_and_salary(df):
     df["base_salary"] = (
         df["base_salary"]
         .astype("string")
-        .str.replace(r"[^\d.]", "", regex=True)
+        .str.replace(r"[$£€,]", "", regex=True)
     )
 
     df["base_salary"] = pd.to_numeric(
@@ -197,6 +218,7 @@ def standardize_employment_type(df):
 def clean_employee_data(df):
 
     df = clean_employee_names(df)
+    df = standardize_emails(df)
     df = clean_acquiredco_noise(df)
     df = standardize_departments(df)
     df = standardize_employment_type(df)
