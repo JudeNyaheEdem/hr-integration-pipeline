@@ -16,7 +16,8 @@ def dedup_exact_id(df: pd.DataFrame) -> pd.DataFrame:
         by=["employee_id", "source_priority"]
     )
 
-    df["dedup_method"] = "exact_id"
+    id_dupes = df["employee_id"].duplicated(keep=False)
+    df.loc[id_dupes, "dedup_method"] = "exact_id"
 
     df = df.drop_duplicates(
         subset=["employee_id"],
@@ -83,9 +84,7 @@ def dedup_email(df: pd.DataFrame) -> pd.DataFrame:
 
     email_duplicates = df["email"].duplicated(keep=False)
 
-    df.loc[email_duplicates, "dedup_method"] = (
-        df.loc[email_duplicates, "dedup_method"] + "_email_match"
-    )
+    df.loc[email_duplicates, "dedup_method"] = "email_match"
 
     df = df.drop_duplicates(
         subset=["email"],
@@ -95,7 +94,7 @@ def dedup_email(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def detect_ghost_employees(payroll_df, hris_df):
+def detect_ghost_employees(payroll_df, hris_df, employee_lookup_df=None):
 
     ghost = payroll_df[
         ~payroll_df["employee_id"].isin(hris_df["employee_id"])
@@ -113,7 +112,43 @@ def detect_ghost_employees(payroll_df, hris_df):
         keep="first"
     )
 
-    return ghost
+    ghost["payroll_employee_id"] = ghost["employee_id"]
+    ghost["name"] = pd.NA
+
+    if (
+        employee_lookup_df is not None
+        and {"employee_id", "first_name", "last_name"}.issubset(
+            employee_lookup_df.columns
+        )
+    ):
+        names = (
+            employee_lookup_df[
+                ["employee_id", "first_name", "last_name"]
+            ]
+            .drop_duplicates(subset=["employee_id"])
+        )
+
+        ghost = ghost.merge(names, on="employee_id", how="left")
+
+        ghost["name"] = (
+            ghost["first_name"].fillna("").astype(str).str.strip()
+            + " "
+            + ghost["last_name"].fillna("").astype(str).str.strip()
+        ).str.strip().replace("", pd.NA)
+
+        ghost = ghost.drop(
+            columns=["first_name", "last_name"],
+            errors="ignore"
+        )
+
+    report_cols = [
+        "payroll_employee_id",
+        "name",
+        "salary_usd_annual",
+        "ghost_flag_reason",
+    ]
+
+    return ghost[[col for col in report_cols if col in ghost.columns]]
 
 
 def add_provenance(df: pd.DataFrame) -> pd.DataFrame:
@@ -167,6 +202,8 @@ def update_source_systems(
 def deduplicate(df):
 
     df = add_source_priority(df)
+
+    df["dedup_method"] = "single_source"
 
     df = dedup_exact_id(df)
 

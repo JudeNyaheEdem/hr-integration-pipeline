@@ -233,3 +233,10 @@ def clean_payroll_data(df):
     df = standardize_dates(df)
 
     return df
+
+
+def clean_benefits_data(df):
+
+    df = standardize_dates(df)
+
+    return df

@@ -8,6 +8,7 @@ from src.ingestion import ingest_all_sources
 from src.cleaning import (
     clean_employee_data,
     clean_payroll_data,
+    clean_benefits_data,
     namespace_employee_ids
 )
 from src.deduplication import deduplicate, detect_ghost_employees, update_source_systems
@@ -33,6 +34,7 @@ def run_pipeline():
     acquiredco_df = clean_employee_data(acquiredco_df)
 
     payroll_df = clean_payroll_data(payroll_df)
+    benefits_df = clean_benefits_data(benefits_df)
 
     globaltech_df = namespace_employee_ids(globaltech_df, "GT")
     acquiredco_df = namespace_employee_ids(acquiredco_df, "AC")
@@ -57,7 +59,8 @@ def run_pipeline():
 
     ghost_df = detect_ghost_employees(
         payroll_df,
-        deduped_df
+        deduped_df,
+        employee_df
     )
 
     logger.info("Building golden employee dataset")
