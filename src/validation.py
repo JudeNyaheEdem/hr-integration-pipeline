@@ -101,6 +101,7 @@ class DataQualityValidator:
             icon = "✓" if r["status"] == "PASS" else "✗"
             logger.info(
                 f"[{icon}] {r['check']} | "
+                f"{r['description']} | "
                 f"{r['pass_rate']:.1%} "
                 f"({r['failed']} failed)"
             )
